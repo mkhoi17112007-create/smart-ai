@@ -1,0 +1,5 @@
+﻿support_type,capacity,cost_per_student,priority_score
+Online mentoring,12,1,5
+Lab tutoring,8,2,8
+One-to-one support,4,4,10
+Workshop review,20,1,6
