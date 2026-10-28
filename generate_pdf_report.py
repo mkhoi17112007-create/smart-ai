@@ -1,0 +1,228 @@
+import os
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from matplotlib.backends.backend_pdf import PdfPages
+
+# Cấu hình phông chữ hỗ trợ tiếng Việt Unicode trên Windows/Mac/Linux
+plt.rcParams["font.sans-serif"] = ["Arial", "Tahoma", "DejaVu Sans"]
+plt.rcParams["axes.unicode_minus"] = False
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if os.path.basename(current_dir).lower() == "scratch":
+    BASE_DIR = os.path.dirname(current_dir)
+else:
+    BASE_DIR = current_dir
+
+FIG_DIR = os.path.join(BASE_DIR, "outputs", "figures")
+REPORT_DIR = os.path.join(BASE_DIR, "report")
+os.makedirs(REPORT_DIR, exist_ok=True)
+PDF_PATH = os.path.join(REPORT_DIR, "Bao_Cao_SmartEdu_AI_Rut_Gon.pdf")
+
+
+def add_header(ax, title, subtitle=""):
+    ax.axis("off")
+    ax.text(0.5, 0.96, title, ha="center", va="top", fontsize=14, fontweight="bold", color="#003366")
+    if subtitle:
+        ax.text(0.5, 0.92, subtitle, ha="center", va="top", fontsize=10, style="italic", color="#444444")
+
+
+def draw_table(ax, col_labels, table_data, bbox, col_widths=None):
+    tbl = ax.table(
+        cellText=table_data,
+        colLabels=col_labels,
+        loc="center",
+        bbox=bbox,
+        colWidths=col_widths,
+        cellLoc="center",
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(8.5)
+    for (row, col), cell in tbl.get_celld().items():
+        if row == 0:
+            cell.set_facecolor("#003366")
+            cell.set_text_props(color="white", weight="bold")
+        elif row % 2 == 0:
+            cell.set_facecolor("#F2F6FA")
+        cell.set_edgecolor("#CCCCCC")
+    return tbl
+
+
+def generate_pdf():
+    with PdfPages(PDF_PATH) as pdf:
+        # ================= TRANG 1: TRANG BÌA, SƠ ĐỒ PIPELINE & PHẦN A =================
+        fig = plt.figure(figsize=(8.27, 11.69))
+        ax = fig.add_axes([0.05, 0.05, 0.90, 0.90])
+        add_header(
+            ax,
+            "BÁO CÁO TỔNG KẾT ĐỒ ÁN: SMARTEDU AI (ITA201 – TOÁN CHO HỌC MÁY)",
+            "Đơn vị: FPT Polytechnic | Nhóm: Hoài (PS47905), Liêm (PS47845), Khôi (PS48256), Khải (PS48224)",
+        )
+
+        # Sơ đồ khối Pipeline tổng thể
+        ax.text(0.02, 0.87, "1. SƠ ĐỒ KIẾN TRÚC PIPELINE 5 PHÂN HỆ TOÁN HỌC", fontsize=11, fontweight="bold", color="#0F4C81")
+        boxes = [
+            (0.03, 0.78, 0.16, 0.07, "DỮ LIỆU\n4.424 SV x 10 cột\n1.500 cạnh tương tác"),
+            (0.22, 0.78, 0.17, 0.07, "PHẦN A: ĐẠI SỐ\nLàm sạch Median\ns = Xw, Norm L1/L2"),
+            (0.42, 0.78, 0.17, 0.07, "PHẦN B: PCA\nGiảm 8 -> 4 chiều\nBảo toàn 80.19% PS"),
+            (0.62, 0.78, 0.17, 0.07, "PHẦN C & D\nBayes, IG, Đồ thị\nMarkov 20 bước"),
+            (0.82, 0.78, 0.15, 0.07, "PHẦN E: TỐI ƯU\nPuLP Z* = 184.0\nMax-Flow = 10"),
+        ]
+        for x, y, w, h, text in boxes:
+            rect = plt.Rectangle((x, y), w, h, facecolor="#E6F0FA", edgecolor="#003366", lw=1.5)
+            ax.add_patch(rect)
+            ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=7.5, fontweight="bold")
+
+        # Bảng Ma trận con 3 mẫu & Điểm nguy cơ s = Xw
+        ax.text(0.02, 0.73, "2. PHẦN A: ĐẠI SỐ TUYẾN TÍNH, GIẢI THÍCH TRỌNG SỐ w & TÍNH GIẤY s = Xw", fontsize=11, fontweight="bold", color="#0F4C81")
+        sub_headers = ["Mã SV", "Attend", "Quiz", "Lab", "Assign", "Study", "Late", "Video", "Part", "Điểm s = Xw", "Nhãn"]
+        sub_rows = [
+            ["SV0001", "0.5", "2.0", "0.0", "0.0", "9.1", "0.0", "5.0", "1.0", "-1.440", "high_risk"],
+            ["SV0002", "0.6", "2.0", "7.0", "6.8", "8.6", "0.0", "17.0", "1.0", "-2.150", "low_risk"],
+            ["SV0003", "0.5", "2.0", "0.0", "0.0", "8.6", "0.0", "5.0", "1.0", "-1.365", "high_risk"],
+        ]
+        draw_table(ax, sub_headers, sub_rows, bbox=[0.02, 0.59, 0.96, 0.12])
+
+        # Bảng giải thích trọng số w
+        w_headers = ["Trọng số", "Đặc trưng", "Giá trị w_j", "Ý nghĩa cốt lõi của dấu và độ lớn trọng số"]
+        w_rows = [
+            ["w1, w2, w3", "attendance, quiz, lab", "+0.25, +0.30, +0.25", "Kế thừa bộ trọng số chuẩn trong đề bài Assignment cho 3 cột đầu."],
+            ["w4", "assignment_score", "-0.20", "Dấu âm: Điểm bài tập lớn cao giúp kéo giảm mạnh điểm nguy cơ."],
+            ["w5", "self_study_hours", "-0.15", "Dấu âm: Tự học càng nhiều giờ/tuần thì rủi ro trượt môn càng giảm."],
+            ["w6", "late_submissions", "+0.40", "Dấu dương lớn nhất: Nộp trễ hạn làm tăng vọt nguy cơ rớt môn."],
+            ["w7, w8", "video_views, participation", "-0.10, -0.30", "Dấu âm: Xem lại bài giảng và tích cực phát biểu giúp giảm rủi ro."],
+        ]
+        draw_table(ax, w_headers, w_rows, bbox=[0.02, 0.36, 0.96, 0.20], col_widths=[0.14, 0.22, 0.18, 0.46])
+
+        # Khung tính giấy + Khoảng cách L1/L2 + Tổ hợp
+        core_text_a = (
+            "• TÍNH GIẤY PHÉP NHÂN MA TRẬN - VECTOR s = Xw:\n"
+            "  - SV0001: s1 = 0.5(0.25) + 2.0(0.30) + 0(0.25) + 0(-0.20) + 9.1(-0.15) + 0(0.40) + 5.0(-0.10) + 1.0(-0.30) = -1.440\n"
+            "  - SV0002: s2 = 0.6(0.25) + 2.0(0.30) + 7.0(0.25) + 6.8(-0.20) + 8.6(-0.15) + 0(0.40) + 17.0(-0.10) + 1.0(-0.30) = -2.150\n"
+            "  - SV0003: s3 = 0.5(0.25) + 2.0(0.30) + 0(0.25) + 0(-0.20) + 8.6(-0.15) + 0(0.40) + 5.0(-0.10) + 1.0(-0.30) = -1.365\n\n"
+            "• CHUẨN HÓA STANDARDSCALER & KHOẢNG CÁCH (SV0001 vs SV0002):\n"
+            "  - Khoảng cách Manhattan (L1 Norm) = 7.6448 | Khoảng cách Euclidean (L2 Norm) = 4.1856 (ứng dụng trong KNN, K-Means).\n\n"
+            "• ĐẠI SỐ TỔ HỢP & KHÔNG GIAN TÌM KIẾM:\n"
+            "  - Chọn 3 từ 8 đặc trưng: C(8, 3) = 56 cách | Grid Search siêu tham số: 3 x 2 x 2 = 12 cấu hình (mở rộng 336 mô hình)."
+        )
+        ax.text(0.02, 0.33, core_text_a, va="top", fontsize=9, bbox=dict(boxstyle="round,pad=0.5", facecolor="#FFFDF5", edgecolor="#D4B106"))
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        # ================= TRANG 2: PHẦN B (TƯƠNG QUAN & GIẢM CHIỀU PCA) =================
+        fig = plt.figure(figsize=(8.27, 11.69))
+        ax = fig.add_axes([0.05, 0.05, 0.90, 0.90])
+        add_header(ax, "3. PHẦN B: PHÂN TÍCH TƯƠNG QUAN & GIẢM CHIỀU DỮ LIỆU (PCA)")
+
+        pca_headers = ["Tiêu chí đánh giá", "Trước PCA (8 cột gốc)", "Sau PCA (4 thành phần)", "Giá trị cốt lõi & Nhận xét"]
+        pca_rows = [
+            ["Phương sai bảo toàn", "100.00%", "80.19% (PC1..PC4)", "Giảm 50% số chiều, đáp ứng chuẩn >= 80% phương sai."],
+            ["Accuracy (Cây quyết định)", "79.89%", "77.97%", "Giảm nhẹ 1.92% do nén chiều và xoay hệ trục tọa độ."],
+            ["F1-Score", "80.05%", "78.06%", "Duy trì hiệu năng phân loại tốt (>= 75%)."],
+            ["Khả năng giải thích", "Rất cao (biết rõ cột yếu)", "Thấp (tổ hợp 8 cột)", "Giữ đặc trưng gốc khi cần giải thích lý do cảnh báo."],
+        ]
+        draw_table(ax, pca_headers, pca_rows, bbox=[0.02, 0.72, 0.96, 0.16], col_widths=[0.22, 0.20, 0.20, 0.38])
+
+        # Chèn 2 hình Heatmap và PCA Scatter
+        for idx, (fname, title_img, pos) in enumerate([
+            ("correlation_heatmap.png", "Hình B.1: Heatmap tương quan Pearson (Lab - Assign r = 0.68)", [0.06, 0.38, 0.88, 0.31]),
+            ("pca_scatter_pc1_pc2.png", "Hình B.2: Phân tách cụm rủi ro trên không gian 2D (PC1 - PC2)", [0.06, 0.04, 0.88, 0.31]),
+        ]):
+            fpath = os.path.join(FIG_DIR, fname)
+            if os.path.exists(fpath):
+                sub_ax = fig.add_axes(pos)
+                sub_ax.imshow(mpimg.imread(fpath))
+                sub_ax.set_title(title_img, fontsize=9.5, fontweight="bold", color="#003366")
+                sub_ax.axis("off")
+
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        # ================= TRANG 3: PHẦN C (XÁC SUẤT BAYES & INFORMATION GAIN) =================
+        fig = plt.figure(figsize=(8.27, 11.69))
+        ax = fig.add_axes([0.05, 0.05, 0.90, 0.90])
+        add_header(ax, "4. PHẦN C: XÁC SUẤT CÓ ĐIỀU KIỆN, NAIVE BAYES & INFORMATION GAIN")
+
+        text_c = (
+            "• XÁC SUẤT 2 CHIỀU & TÍNH GIẤY ĐỊNH LÝ BAYES:\n"
+            "  - P(high_risk | att_low) = 91.32% (Dự báo rủi ro khi vắng học) vs P(att_low | high_risk) = 56.98% (Đặc điểm nhóm rủi ro).\n"
+            "  - Tính giấy Bayes: P(high_risk | att_low) = [0.5698 x 0.5007] / 0.3124 = 0.9132 (91.32% - Khớp 100%).\n"
+            "• MÔ HÌNH GAUSSIAN NAIVE BAYES: Accuracy = 74.69% | Precision = 86.38% | Recall = 58.69% | F1 = 69.89%.\n"
+            "  - Dự báo mẫu SV0001: Prior P(high_risk) = 0.5007 -> Posterior P(high_risk | X) = 1.0000 (Dự đoán chuẩn: high_risk)."
+        )
+        ax.text(0.02, 0.89, text_c, va="top", fontsize=9, bbox=dict(boxstyle="round,pad=0.5", facecolor="#F0F7FF", edgecolor="#003366"))
+
+        ig_headers = ["Hạng", "Đặc trưng rời rạc hóa", "Entropy gốc H(S)", "Entropy H(S|A)", "Information Gain (bits)"]
+        ig_rows = [
+            ["1", "attendance_bin (Chuyên cần)", "1.0000", "0.6617", "0.3383 (Mạnh nhất)"],
+            ["2", "assignment_bin (Điểm Assignment)", "1.0000", "0.8328", "0.1672"],
+            ["3", "lab_bin (Điểm thực hành Lab)", "1.0000", "0.8797", "0.1203"],
+            ["4", "participation_level (Tương tác)", "1.0000", "0.9271", "0.0729"],
+            ["5", "quiz_bin (Điểm kiểm tra Quiz)", "1.0000", "0.9943", "0.0057"],
+            ["6", "late_sub_bin (Nộp bài muộn)", "1.0000", "0.9947", "0.0053"],
+        ]
+        draw_table(ax, ig_headers, ig_rows, bbox=[0.02, 0.52, 0.96, 0.22])
+
+        for fname, title_img, pos in [
+            ("gnb_confusion_matrix.png", "Hình C.1: Confusion Matrix (GaussianNB)", [0.04, 0.08, 0.42, 0.38]),
+            ("information_gain_ranking.png", "Hình C.2: Xếp hạng đặc trưng theo Information Gain", [0.49, 0.08, 0.47, 0.38]),
+        ]:
+            fpath = os.path.join(FIG_DIR, fname)
+            if os.path.exists(fpath):
+                sub_ax = fig.add_axes(pos)
+                sub_ax.imshow(mpimg.imread(fpath))
+                sub_ax.set_title(title_img, fontsize=9, fontweight="bold", color="#003366")
+                sub_ax.axis("off")
+
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        # ================= TRANG 4: PHẦN D & PHẦN E (ĐỒ THỊ, MARKOV & TỐI ƯU HÓA) =================
+        fig = plt.figure(figsize=(8.27, 11.69))
+        ax = fig.add_axes([0.05, 0.05, 0.90, 0.90])
+        add_header(ax, "5. PHẦN D & E: ĐỒ THỊ TƯƠNG TÁC, CHUỖI MARKOV & TỐI ƯU HÓA HỖ TRỢ")
+
+        de_headers = ["Phân hệ Toán học", "Thông số mô hình", "Kết quả thực nghiệm cốt lõi"]
+        de_rows = [
+            ["D.1 & D.2. Đồ thị & BFS/DFS", "|V| = 1.128 đỉnh, |E| = 1.500 cạnh", "Duyệt từ SV0030 thăm 113 đỉnh; 430 cụm WCC (max 435), 1.029 cụm SCC (max 10)."],
+            ["D.3. Chuỗi Markov 3 trạng thái", "pi_0 = [0.70, 0.25, 0.05]", "Bước 1: pi_1 = [57.75%, 30.25%, 12.00%] -> Dừng (k=20): pi* = [34.57%, 35.80%, 29.63%]."],
+            ["E.1. Quy hoạch PuLP BIP", "12 SV nguy cơ cao, Ngân sách 24h", "Optimal Z* = 184.0 | Dùng 23/24 giờ | Hỗ trợ thành công 12/12 sinh viên (100%)."],
+            ["E.2. Ghép cặp Max-Flow", "Nguồn s -> 10 SV -> 5 Mentor -> Đích t", "Max Flow = 10 (Min-Cut = 10), ghép 10/10 SV | Điểm nghẽn tại Mentor M03 và M01."],
+        ]
+        draw_table(ax, de_headers, de_rows, bbox=[0.02, 0.68, 0.96, 0.20], col_widths=[0.25, 0.25, 0.50])
+
+        for fname, title_img, pos in [
+            ("student_interaction_graph.png", "Hình D.1: Mạng lưới tương tác (25 SV mẫu)", [0.04, 0.22, 0.43, 0.40]),
+            ("markov_convergence.png", "Hình D.2: Hội tụ Chuỗi Markov qua 20 bước", [0.50, 0.22, 0.46, 0.40]),
+        ]:
+            fpath = os.path.join(FIG_DIR, fname)
+            if os.path.exists(fpath):
+                sub_ax = fig.add_axes(pos)
+                sub_ax.imshow(mpimg.imread(fpath))
+                sub_ax.set_title(title_img, fontsize=9, fontweight="bold", color="#003366")
+                sub_ax.axis("off")
+
+        ax.text(
+            0.02,
+            0.14,
+            "• KẾT LUẬN CỐT LÕI: Hệ thống SmartEdu AI đã hoàn thiện chu trình khép kín từ Tiền xử lý đại số (Phần A), Nén chiều PCA (Phần B),\n"
+            "  Dự báo rủi ro Bayes & Information Gain (Phần C), Phân tích đồ thị & dự báo Markov dài hạn (Phần D) đến Tối ưu hóa phân bổ Mentor\n"
+            "  bằng Quy hoạch nguyên nhị phân PuLP và Luồng cực đại Max-Flow (Phần E), sẵn sàng tích hợp cảnh báo sớm vào thực tiễn đào tạo.",
+            va="top",
+            fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="#E8F8F5", edgecolor="#117A65"),
+        )
+
+        pdf.savefig(fig)
+        plt.close(fig)
+
+    print(f"[HOAN TAT] Da tao file Bao cao PDF tai: {PDF_PATH}")
+
+
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    generate_pdf()
