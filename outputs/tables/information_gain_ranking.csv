@@ -1,0 +1,7 @@
+﻿Feature,Entropy_Parent,Conditional_Entropy,Information_Gain
+attendance_bin,1.0,0.6617,0.3383
+assignment_bin,1.0,0.8328,0.1672
+lab_bin,1.0,0.8797,0.1203
+participation_level,1.0,0.9271,0.0729
+quiz_bin,1.0,0.9943,0.0057
+late_sub_bin,1.0,0.9947,0.0053

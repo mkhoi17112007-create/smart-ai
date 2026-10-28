@@ -1,0 +1,10 @@
+﻿Thuộc tính,Giá trị / Nhóm,Số mẫu có Feature,Số mẫu High Risk,P(high_risk | Feature),P(Feature | high_risk)
+attendance_group,Chuyên cần thấp (<80%),1530,1377,0.9,0.6217
+attendance_group,Chuyên cần cao (>=80%),2894,838,0.2896,0.3783
+late_sub_group,Có nộp bài muộn (>0 lần),294,194,0.6599,0.0876
+late_sub_group,Không nộp bài muộn (0 lần),4130,2021,0.4893,0.9124
+participation_level,Mức độ tham gia: Thấp,1571,1005,0.6397,0.4537
+participation_level,Mức độ tham gia: Trung bình,1754,946,0.5393,0.4271
+participation_level,Mức độ tham gia: Cao,1099,264,0.2402,0.1192
+self_study_group,Tự học ít (<8h/tuần),5,2,0.4,0.0009
+self_study_group,Tự học nhiều (>=8h/tuần),4419,2213,0.5008,0.9991
